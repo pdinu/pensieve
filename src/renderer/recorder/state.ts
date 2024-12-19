@@ -129,15 +129,19 @@ export const useRecorderState = create<RecorderState>()((_set, get) => {
 
 const unpackMediaRecorder = async (
   recorder: MediaRecorder | null,
-  type = "audio/webm",
+  type = "audio/webm"
 ) => {
   if (!recorder) return Promise.resolve(null);
-  return new Promise<Buffer>((r) => {
+  return new Promise<ArrayBuffer>((r) => {
     recorder.stop();
-    // eslint-disable-next-line no-param-reassign
     recorder.ondataavailable = async (e) => {
       const blob = new Blob([e.data], { type });
-      r(await blobToBuffer(blob));
+      const buffer = await blobToBuffer(blob);
+      if (buffer.buffer instanceof ArrayBuffer) {
+        r(buffer.buffer);
+      } else {
+        throw new Error("Expected ArrayBuffer");
+      }
     };
   });
 };
